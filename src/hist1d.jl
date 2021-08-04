@@ -52,18 +52,37 @@ function bincenters(h::Hist1D)
 end
 
 """
-    push!(h::Hist1D, val::Real, wgt::Real=one{T})
+    empty!(h::Hist1D)
+
+Resets a histogram's bin counts and `sumw2`.
+"""
+function Base.empty!(h::Hist1D{T,E}) where {T,E}
+    h.hist.weights .= zero(T)
+    h.sumw2 .= zero(T)
+    return h
+end
+
+
+"""
+    push!(h::Hist1D, val::Real, wgt::Real=1.0)
+    unsafe_push!(h::Hist1D, val::Real, wgt::Real=1.0)
 
 Adding one value at a time into histogram. 
 `sumw2` (sum of weights^2) accumulates `wgt^2` with a default weight of 1.
+`unsafe_push!` is a faster version of `push!` that is not thread-safe.
 """
-function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=one(T)) where {T,E}
+function Base.push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
     @inbounds binidx = _edge_binindex(h.hist.edges[1], val)
     lock(h)
     @inbounds h.hist.weights[binidx] += wgt
     @inbounds h.sumw2[binidx] += wgt^2
     unlock(h)
-    return h
+end
+
+function unsafe_push!(h::Hist1D{T,E}, val::Real, wgt::Real=1.0) where {T,E}
+    @inbounds binidx = _edge_binindex(h.hist.edges[1], val)
+    @inbounds h.hist.weights[binidx] += wgt
+    @inbounds h.sumw2[binidx] += wgt^2
 end
 
 """
