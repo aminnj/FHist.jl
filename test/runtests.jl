@@ -33,6 +33,15 @@ end
     @test all(h1.hist.weights .≈ sth1.weights)
 end
 
+@testset "Special binning cases" begin
+    # integer values and integer binning
+    a = floor.(Int,abs.(randn(10^6)))
+    h1 = Hist1D(a, 0:5)
+    h2 = Hist1D(fit(Histogram, a, 0:5))
+    @test h1 == h2
+end
+
+
 @testset "push! route" begin
     a = rand(10^5)
     r1 = [0, 0.3, 0.4, 0.8, 1]
